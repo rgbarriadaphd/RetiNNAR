@@ -4,7 +4,7 @@
 # Project: RetiNNAR
 # File: main.py
 
-Description: "Enter description here"
+Description: Main script
 """
 
 if __name__ == '__main__':
