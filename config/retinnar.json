@@ -1,0 +1,15 @@
+{
+  "dataset": {
+    "eq":{
+      "fold_distribution": "eq_model/eq_fold_distribution.json",
+      "pretrained_model": "eq_model/eyeq_model.pth"
+    },
+    "transforms": {
+      "image_size" : 224,
+      "normalization": {
+        "mean" : [0.485, 0.456, 0.406],
+        "std" : [0.229, 0.224, 0.225]
+      }
+    }
+  }
+}
