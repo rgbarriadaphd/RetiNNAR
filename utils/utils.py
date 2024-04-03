@@ -26,7 +26,7 @@ class Utils:
             try:
                 self._config = json.load(config_file)
             except ValueError:
-                print("INVALID JSON file format...")
+                print(f'INVALID JSON file format: {json_file}')
                 exit(-1)
 
     def build_path(self, partial: str) -> str:

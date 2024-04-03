@@ -2,14 +2,25 @@
   "dataset": {
     "eq":{
       "fold_distribution": "eq_model/eq_fold_distribution.json",
-      "pretrained_model": "eq_model/eyeq_model.pth"
-    },
-    "transforms": {
-      "image_size" : 224,
+      "pretrained_model": "eq_model/eyeq_model.pth",
+      "image_distribution": "eq_model/image_distribution.json"
+    }
+  },
+  "transforms": {
+      "image_size": [224, 224],
       "normalization": {
         "mean" : [0.485, 0.456, 0.406],
         "std" : [0.229, 0.224, 0.225]
       }
-    }
+    },
+    "model": {
+      "activation_layer": [3, "class_3"],
+      "n_classes": 3
+    },
+  "triplets": {
+    "triplet_threshold": 0.2,
+    "normalize_embeddings": false,
+    "embeddings_file": "eq_model/image_embeddings{suffix}.json",
+    "triplets_file": "eq_model/triplets{suffix}.json"
   }
 }
