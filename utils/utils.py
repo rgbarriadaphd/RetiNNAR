@@ -43,8 +43,12 @@ class Utils:
         """Return config file"""
         return self._config
 
-
-if __name__ == '__main__':
-    utils = Utils("config/retinnar.json")
-    print(utils.get_root_path())
-    print(utils.get_config())
+    def load_json(self, json_path: str) -> dict:
+        """Loads a json file"""
+        json_file = os.path.join(self._root_path, json_path)
+        with open(json_file, 'r') as jf:
+            try:
+                return json.load(jf)
+            except ValueError:
+                print(f'INVALID JSON file format: {json_file}')
+                exit(-1)

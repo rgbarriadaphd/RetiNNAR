@@ -83,7 +83,7 @@ def retrieve_triplet_data(anchor_data: dict, images: dict, triplet_type: str) ->
     return triplet_data
 
 
-def get_embedding(vgg_model: models.vgg16, image: str) -> torch.tensor:
+def get_embedding(vgg_model: models.vgg16, image: str) -> torch.Tensor:
     """Returns the feature vector of corresponding layer"""
 
     # image transformation definition
@@ -107,11 +107,11 @@ def get_embedding(vgg_model: models.vgg16, image: str) -> torch.tensor:
         return torch.flatten(activation[layer_name])
 
 
-def satisfy_condition(vgg_model: models.vgg16, image_anchor: str, image_positive: str, image_negative: str) -> bool:
+def satisfy_condition(vgg_model: models.vgg16, anchor_path: str, positive_path: str, negative_path: str) -> bool:
     """
     Check condition to include triplet in the triplet list
 
-    image_anchor, image_positive, image_negative are strings of each image path.
+    anchor_path, positive_path, negative_path are strings of each image path.
     anchor and positive are different images from the same class and negative is an image from a
     different class.
 
@@ -119,9 +119,9 @@ def satisfy_condition(vgg_model: models.vgg16, image_anchor: str, image_positive
         ‖ 𝐀 − 𝐍 ‖^2 − ‖ 𝐀 − 𝐏 ‖^2 < 𝛼
     where ‖∙‖ is the Euclidean Distance and 𝛼 is a real numbered threshold
     """
-    x_anchor = get_embedding(vgg_model, image_anchor)
-    x_positive = get_embedding(vgg_model, image_positive)
-    x_negative = get_embedding(vgg_model, image_negative)
+    x_anchor = get_embedding(vgg_model, anchor_path)
+    x_positive = get_embedding(vgg_model, positive_path)
+    x_negative = get_embedding(vgg_model, negative_path)
     a = torch.flatten(torch.cdist(x_anchor, x_negative, p=2)).item()
     b = torch.flatten(torch.cdist(x_anchor, x_positive, p=2)).item()
     threshold = config["triplets"]["triplet_threshold"]
@@ -129,23 +129,15 @@ def satisfy_condition(vgg_model: models.vgg16, image_anchor: str, image_positive
 
 
 activation = {}
-def get_activation(name):
-    def hook(model, input, output):
-        activation[name] = output.detach()
-    return hook
 
-# def test_image(model, image_test):
-#     # Load image
-#     with open(image_test, "rb") as f:
-#         image = Image.open(f).convert("RGB")
-#         image = data_transforms(image)
-#     image = image.unsqueeze(0)
-#
-#     model.classifier[3].register_forward_hook(get_activation('class_3'))
-#     out = model(image)
-#     emmbeding = activation['class_3']
-#
-#     print(emmbeding)
+
+def get_activation(name: str) -> torch.Tensor:
+    """Retrieve activation from a specific layer of a model"""
+
+    def hook(output):
+        activation[name] = output.detach()
+
+    return hook
 
 
 if __name__ == '__main__':
@@ -196,25 +188,25 @@ if __name__ == '__main__':
                     if satisfy_condition(model, anchor, image_positive, image_negative):
                         # Fill triplet
                         triplet_list[triplet_idx] = {
-                                "anchor": {
-                                    "path": image_embeddings[anchor],
-                                    "eq_label": image_embeddings[anchor]["eq_label"],
-                                    "dr_label": image_embeddings[anchor]["dr_label"],
-                                    "embedding": image_embeddings[anchor]["embedding"]
-                                },
-                                "positive": {
-                                    "path": image_embeddings[positive],
-                                    "eq_label": image_embeddings[positive]["eq_label"],
-                                    "dr_label": image_embeddings[positive]["dr_label"],
-                                    "embedding": image_embeddings[positive]["embedding"]
-                                },
-                                "negative": {
-                                    "path": image_embeddings[negative],
-                                    "eq_label": image_embeddings[negative]["eq_label"],
-                                    "dr_label": image_embeddings[negative]["dr_label"],
-                                    "embedding": image_embeddings[negative]["embedding"]
-                                }
+                            "anchor": {
+                                "path": image_embeddings[anchor],
+                                "eq_label": image_embeddings[anchor]["eq_label"],
+                                "dr_label": image_embeddings[anchor]["dr_label"],
+                                "embedding": image_embeddings[anchor]["embedding"]
+                            },
+                            "positive": {
+                                "path": image_embeddings[positive],
+                                "eq_label": image_embeddings[positive]["eq_label"],
+                                "dr_label": image_embeddings[positive]["dr_label"],
+                                "embedding": image_embeddings[positive]["embedding"]
+                            },
+                            "negative": {
+                                "path": image_embeddings[negative],
+                                "eq_label": image_embeddings[negative]["eq_label"],
+                                "dr_label": image_embeddings[negative]["dr_label"],
+                                "embedding": image_embeddings[negative]["embedding"]
                             }
+                        }
                         triplet_idx += 1
                     pbar.set_postfix(**{'P ': p_id})
             pbar.update(1)
@@ -224,4 +216,3 @@ if __name__ == '__main__':
     output_json = config["triplets"]["triplets_file"].format(suffix=output_suffix)
     with open(output_json, 'w') as fp:
         json.dump(triplet_list, fp)
-

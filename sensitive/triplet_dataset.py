@@ -6,96 +6,54 @@
 
 Description: Class to implement triplet dataset extraction
 """
-import json
-import os.path
+import torch
+import os
+import sys
+from torch.utils.data import Dataset, DataLoader
+from utils import utils
 
-import pandas as pd
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+
+utils = utils.Utils("config/retinnar.json")
+config = utils.get_config()
 
 
-class EyePACSTripletDataset:
-    def __init__(self, dt_path, label_path, ):
-        self._images = None
+class EyePACSTripletDataset(Dataset):
+    """
+    Triplet dataset to manage triplet embeddings
+    """
+    def __init__(self, file_path: str):
+        """
+        Class constructor. Initialize dataset from triplet list
+        :param file_path: (str) path to the json containing triplet data
+        """
+        self._triplet_list = utils.load_json(file_path)
 
     def __len__(self):
-        return len(self._images)
+        return len(self._triplet_list)
 
     def __getitem__(self, item):
-        pass
-
-        # if self.transform != None:
-        #     anchor_img = self._transform(anchor_img)
-        #     positive_img = self._transform(positive_img)
-        #     negative_img = self._transform(negative_img)
-        #
-        # return anchor_img, positive_img, negative_img, anchor_label
+        """Retrieve item. Convert embeddings from list to tensors"""
+        triplet = self._triplet_list[str(item)]
+        anchor_embedding = torch.tensor(triplet["anchor"]["embedding"])
+        anchor_label = torch.tensor(triplet["anchor"]["eq_label"])
+        positive_embedding = torch.tensor(triplet["positive"]["embedding"])
+        negative_embedding = torch.tensor(triplet["negative"]["embedding"])
+        return anchor_embedding, positive_embedding, negative_embedding, anchor_label
 
 
 if __name__ == '__main__':
-    # Load EyePACS
-    image_folder = "/home/ruben/PycharmProjects/RetiNNAR/input/train"
-    fold_distribution = "/home/ruben/PycharmProjects/RetiNNAR/eq_model/eq_fold_distribution.json"
 
-    csv_train = "/user/rgbarriada/shared/Eye-Quality/Label_EyeQ_train.csv"
-    csv_test = "/user/rgbarriada/shared/Eye-Quality/Label_EyeQ_test.csv"
-    df_test = pd.read_csv(csv_test)
-    df_train = pd.read_csv(csv_train)
+    # Test triplet dataset. Load data
+    triplet_dataset = EyePACSTripletDataset("eq_model/triplets.json")
 
-    data_classes = {"Good": 0, "Usable": 1, "Reject": 2}
+    # init dataloader
+    dataloader = DataLoader(triplet_dataset, batch_size=8,
+                            shuffle=True, num_workers=4,
+                            pin_memory=True)
 
-    # read json
-    input_json = "/user/rgbarriada/shared/RetiNNAR/eq_model/eq_fold_distribution.json"
-
-    with open(input_json, 'r') as fp:
-        data_dict = json.load(fp)
-
-
-    convert_dataset_dict = {'train':[], 'test':[]}
-    for fold_id in data_dict:
-        for img_path, eq_label in data_dict[fold_id]:
-            img_name = img_path.split('/')[-1]
-            if 'train' in img_path:
-                query = df_train[(df_train['image'] == img_name)]
-            else:
-                query = df_test[(df_test['image'] == img_name)]
-            if len(query) > 0:
-                # found
-                query_dr_label = query['DR_grade']
-                assert int(eq_label) == int(query['quality']), f'{int(eq_label)} != {int(query["quality"])}'
-            else:
-                # Not found
-                raise NotImplemented
-
-            stage = 'test' if fold_id == '1' else 'train'
-
-            split_path = img_path.split('/')
-            new_img_path = os.path.join("/".join(split_path[0:4]), 'Eye-Quality', "/".join(split_path[8:]))
-            assert os.path.exists(new_img_path)
-
-            convert_dataset_dict[stage].append((new_img_path, int(eq_label), int(query_dr_label)))
-
-    # write json
-    output_json = "/user/rgbarriada/shared/RetiNNAR/eq_model/image_distribution.json"
-    with open(output_json, 'w') as fp:
-        json.dump(convert_dataset_dict, fp)
-
-    # # read json
-    # input_json = "/home/ruben/PycharmProjects/RetiNNAR/eq_model/image_distribution.json"
-    #
-    # with open(input_json, 'r') as fp:
-    #     data_dict = json.load(fp)
-    #
-    #
-    #
-    # print(data_dict)
-
-
-
-
-
-
-
-
-
-
-
-
+    # iterate data
+    for batch in dataloader:
+        anchor, positive, negative, label = batch
+        all(isinstance(x, torch.Tensor) for x in batch)
