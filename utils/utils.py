@@ -52,3 +52,14 @@ class Utils:
             except ValueError:
                 print(f'INVALID JSON file format: {json_file}')
                 exit(-1)
+
+    def save_json(self, json_path: str, json_dict: dict):
+        """Save a json file"""
+        json_file = os.path.join(self._root_path, json_path)
+        with open(json_file, 'w') as fp:
+            try:
+                json.dump(json_dict, fp)
+            except ValueError:
+                print(f'INVALID JSON file format: {json_file}')
+                exit(-1)
+
