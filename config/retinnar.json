@@ -22,5 +22,10 @@
     "normalize_embeddings": false,
     "embeddings_file": "eq_model/image_embeddings{suffix}.json",
     "triplets_file": "eq_model/triplets{suffix}.json"
+  },
+  "sensitive_model": {
+    "seed": 3,
+    "batch_size": 32
+
   }
 }

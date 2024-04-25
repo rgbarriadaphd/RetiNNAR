@@ -8,7 +8,7 @@ Description: Utils file for common functionalities.
 """
 import json
 import os.path
-
+import time
 
 class Utils:
     def __init__(self, config_path: str):
@@ -45,10 +45,13 @@ class Utils:
 
     def load_json(self, json_path: str) -> dict:
         """Loads a json file"""
+        t0 = time.time()
         json_file = os.path.join(self._root_path, json_path)
         with open(json_file, 'r') as jf:
             try:
-                return json.load(jf)
+                json_dict = json.load(jf)
+                print(f"Loaded '{json_file}' json in {time.time()-t0}s")
+                return json_dict
             except ValueError:
                 print(f'INVALID JSON file format: {json_file}')
                 exit(-1)

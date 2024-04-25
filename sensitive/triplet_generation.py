@@ -12,11 +12,9 @@ import time
 import os
 import sys
 import torch
-from future.backports.datetime import time
 
 import torch.nn as nn
-from torchvision import models
-from torchvision import transforms
+from torchvision import models, transforms
 from torch.nn.functional import normalize
 from PIL import Image
 
